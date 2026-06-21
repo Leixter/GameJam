@@ -2,42 +2,39 @@ using UnityEngine;
 
 public class Camara : MonoBehaviour
 {
-    [SerializeField] public float Sensibilidad = 100;
-    public Transform Player;
+    [Header("Referencias")]
+    [SerializeField] private Transform objetivo;
 
-    public float RotacionHorizontal = 0;
-    public float RotacionVertical = 0;
-    
-    void Start()
+    [Header("Posicion")]
+    [SerializeField] private Vector3 offset = new Vector3(0f, 3f, -4f);
+
+    [Header("Rotacion con Mouse")]
+    [SerializeField] private float sensibilidad = 3f;
+    [SerializeField] private float limiteSuperior = 20f;
+    [SerializeField] private float limiteInferior = 60f;
+
+    private float rotacionX = 20f;
+
+    private void Start()
     {
-        //Bloque el cursor en el centro de la pantalla
         Cursor.lockState = CursorLockMode.Locked;
-        //Oculta el cursor 
         Cursor.visible = false;
+
+        if (objetivo == null)
+            objetivo = transform.parent;
     }
 
-    void Update()
+    private void LateUpdate()
     {
-        //Se toman los valores del mouse 
-        float ValorX = Input.GetAxis("Mouse X") * Sensibilidad * Time.deltaTime;
-        float ValorY = Input.GetAxis("Mouse Y") * Sensibilidad * Time.deltaTime;
+        float mouseY = Input.GetAxis("Mouse Y") * sensibilidad;
+        rotacionX -= mouseY;
+        rotacionX = Mathf.Clamp(rotacionX, limiteSuperior, limiteInferior);
 
-        //Guarda los valores y queda en el valor para seguir
-        RotacionHorizontal -= ValorX;
-        RotacionVertical -= ValorY;
-        // Limita 80 grados
-        RotacionVertical = Mathf.Clamp(RotacionVertical, -80f, 80f);
-        //Hace la rotacion vertical fluida
-        transform.localRotation = Quaternion.Euler(RotacionVertical, 0, 0);
+        float mouseX = Input.GetAxis("Mouse X") * sensibilidad;
+        objetivo.Rotate(Vector3.up * mouseX);
 
-        // Hace la rotacion horizontal
-        if (Player != null)
-        {
-            Player.Rotate(Vector3.up * ValorX);
-        }
-        else
-        {
-            Debug.LogWarning("Warning: asigna el Player en el inspector.");
-        }
+        Quaternion rotacion = objetivo.rotation * Quaternion.Euler(rotacionX, 0f, 0f);
+        transform.position = objetivo.position + rotacion * offset;
+        transform.LookAt(objetivo.position + Vector3.up * 1f);
     }
 }
